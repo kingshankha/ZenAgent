@@ -2,8 +2,6 @@ package main
 
 import (
 	"log"
-	"net/http"
-	"time"
 
 	"github.com/kingshankha/ZenAgent/middleware"
 )
@@ -11,12 +9,7 @@ import (
 func main() {
 	router := middleware.NewRouter()
 
-	s := &http.Server{
-		Addr:           ":8080",
-		Handler:        router,
-		ReadTimeout:    10 * time.Second,
-		WriteTimeout:   10 * time.Second,
-		MaxHeaderBytes: 1 << 20,
-	}
+	s := middleware.NewServer("8080", &router)
+
 	log.Fatal(s.ListenAndServe())
 }

@@ -1,70 +1,94 @@
 package models
 
-type AzureOpenAIResponse struct {
-	ID                 string         `json:"id"`
-	Object             string         `json:"object"`
-	CreatedAt          int64          `json:"created_at"`
-	Status             string         `json:"status"`
-	Background         bool           `json:"background"`
-	Error              *string        `json:"error"`
-	IncompleteDetails  *string        `json:"incomplete_details"`
-	Instructions       *string        `json:"instructions"`
-	MaxOutputTokens    *int           `json:"max_output_tokens"`
-	Model              string         `json:"model"`
-	Output             []OutputItem   `json:"output"`
-	ParallelToolCalls  bool           `json:"parallel_tool_calls"`
-	PreviousResponseID *string        `json:"previous_response_id"`
-	Reasoning          Reasoning      `json:"reasoning"`
-	ServiceTier        string         `json:"service_tier"`
-	Store              bool           `json:"store"`
-	Temperature        float64        `json:"temperature"`
-	Text               TextInfo       `json:"text"`
-	TopP               float64        `json:"top_p"`
-	Truncation         string         `json:"truncation"`
-	Usage              Usage          `json:"usage"`
-	User               *string        `json:"user"`
-	Metadata           map[string]any `json:"metadata"`
+import "github.com/kingshankha/ZenAgent/prompts/templates"
+
+type AzureOpenAIErrRespPayload struct {
+	Error APIError `json:"error"`
 }
 
-type OutputItem struct {
-	ID      string    `json:"id"`
-	Type    string    `json:"type"`
-	Status  string    `json:"status"`
-	Content []Content `json:"content"`
-	Role    string    `json:"role"`
+type APIError struct {
+	Code    string `json:"code"`
+	Message string `json:"message"`
 }
 
-type Content struct {
-	Type        string `json:"type"`
-	Annotations []any  `json:"annotations"` // [] for now; adjust if needed
-	Text        string `json:"text"`
+type AzureOpenAIAPIReqPayload struct {
+	templates.AzureOpenAIPrompt
+	Temperature float32 `json:"temperature"`
 }
 
-type Reasoning struct {
-	Effort  *string `json:"effort"`
-	Summary *string `json:"summary"`
+type AzureOpenAIRespPayload struct {
+	Choices             []Choice             `json:"choices"`
+	Created             int64                `json:"created"`
+	ID                  string               `json:"id"`
+	Model               string               `json:"model"`
+	Object              string               `json:"object"`
+	PromptFilterResults []PromptFilterResult `json:"prompt_filter_results"`
+	SystemFingerprint   string               `json:"system_fingerprint"`
+	Usage               Usage                `json:"usage"`
 }
 
-type TextInfo struct {
-	Format TextFormat `json:"format"`
+type Choice struct {
+	ContentFilterResults ContentFilterResults `json:"content_filter_results"`
+	FinishReason         string               `json:"finish_reason"`
+	Index                int                  `json:"index"`
+	Logprobs             any                  `json:"logprobs"` // nullable
+	Message              Message              `json:"message"`
 }
 
-type TextFormat struct {
-	Type string `json:"type"`
+type ContentFilterResults struct {
+	Hate                  SeverityFilter   `json:"hate"`
+	ProtectedMaterialCode DetectionFilter  `json:"protected_material_code,omitempty"`
+	ProtectedMaterialText DetectionFilter  `json:"protected_material_text,omitempty"`
+	SelfHarm              SeverityFilter   `json:"self_harm"`
+	Sexual                SeverityFilter   `json:"sexual"`
+	Violence              SeverityFilter   `json:"violence"`
+	CustomBlocklists      *FilteredFlag    `json:"custom_blocklists,omitempty"`
+	Jailbreak             *DetectionFilter `json:"jailbreak,omitempty"`
+	Profanity             *DetectionFilter `json:"profanity,omitempty"`
+}
+
+type SeverityFilter struct {
+	Filtered bool   `json:"filtered"`
+	Severity string `json:"severity"`
+}
+
+type DetectionFilter struct {
+	Filtered bool `json:"filtered"`
+	Detected bool `json:"detected"`
+}
+
+type FilteredFlag struct {
+	Filtered bool `json:"filtered"`
+}
+
+type Message struct {
+	Annotations []any  `json:"annotations"` // could be refined if structure is known
+	Content     string `json:"content"`
+	Refusal     any    `json:"refusal"` // nullable
+	Role        string `json:"role"`
+}
+
+type PromptFilterResult struct {
+	PromptIndex          int                  `json:"prompt_index"`
+	ContentFilterResults ContentFilterResults `json:"content_filter_results"`
 }
 
 type Usage struct {
-	InputTokens         int         `json:"input_tokens"`
-	InputTokensDetails  TokenDetail `json:"input_tokens_details"`
-	OutputTokens        int         `json:"output_tokens"`
-	OutputTokensDetails TokenDetail `json:"output_tokens_details"`
-	TotalTokens         int         `json:"total_tokens"`
+	CompletionTokens        int                    `json:"completion_tokens"`
+	CompletionTokensDetails CompletionTokensDetail `json:"completion_tokens_details"`
+	PromptTokens            int                    `json:"prompt_tokens"`
+	PromptTokensDetails     PromptTokensDetail     `json:"prompt_tokens_details"`
+	TotalTokens             int                    `json:"total_tokens"`
 }
 
-type TokenDetail struct {
-	CachedTokens    *int `json:"cached_tokens,omitempty"`
-	ReasoningTokens *int `json:"reasoning_tokens,omitempty"`
+type CompletionTokensDetail struct {
+	AcceptedPredictionTokens int `json:"accepted_prediction_tokens"`
+	AudioTokens              int `json:"audio_tokens"`
+	ReasoningTokens          int `json:"reasoning_tokens"`
+	RejectedPredictionTokens int `json:"rejected_prediction_tokens"`
 }
 
-// You can use this if the structure of tools is unknown
-type Tool map[string]any
+type PromptTokensDetail struct {
+	AudioTokens  int `json:"audio_tokens"`
+	CachedTokens int `json:"cached_tokens"`
+}

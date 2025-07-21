@@ -1,5 +1,7 @@
 package llms
 
+import "github.com/kingshankha/ZenAgent/prompts/templates"
+
 type llm interface {
-	Generate(prompt string, temperature float32) (response string)
+	Generate(prompt templates.AzureOpenAIPrompt, temperature float32) (err error, ai_response string)
 }
